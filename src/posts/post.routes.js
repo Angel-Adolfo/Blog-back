@@ -1,34 +1,40 @@
-import mongoose from "mongoose";
+import { Router } from "express";
+import { check } from "express-validator";
+import {
+    createPost,
+    findPost,
+    findPostByName,
+    addCommentToPost,
+    getCommentsByPostName,
+} from "./post.controller.js";
+import { validateFields } from "../middlewares/validate-fields.js";
 
+const router = Router();
 
-const PostSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, 'The name field is required']
-    },
-    title: {
-        type: String,
-        required: [true, 'The title field is required']
-    },
-    thumbnail: {
-        type: String
-    },
-    content: {
-        type: Array
-    },
-    comment: {
-        type: [{
-            name: {
-                type: String,
-            },
-            text: {
-                type: String,
-            }
-        }],
-        default: []
-    }
-}, {
-    versionKey: false
-});
+router.post(
+    "/createPost",
+    [
+        check("name", "Name is required").not().isEmpty(),
+        check("title", "Title is required").not().isEmpty(),
+        validateFields,
+    ],
+    createPost
+);  
+    
+router.get("/posts/:name", findPost);
 
-export default mongoose.model('Post', PostSchema);
+router.get("/post/:name", findPostByName);
+
+router.post(
+    "/posts/:name/add-comments",
+    [
+        check("name", "Anonymous posting is not allowed").not().isEmpty(),
+        check("text", "There is no content to add to the comment.").not().isEmpty(),
+        validateFields,
+    ],
+    addCommentToPost
+);
+
+router.get("/posts/:name/comments", getCommentsByPostName);
+
+export default router;
